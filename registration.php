@@ -3,21 +3,16 @@
 <?php
 $statement = $pdo->prepare("SELECT * FROM tbl_settings WHERE id=1");
 $statement->execute();
-$result = $statement->fetchAll(PDO::FETCH_ASSOC);                            
+$result = $statement->fetchAll(PDO::FETCH_ASSOC);
 foreach ($result as $row) {
     $banner_registration = $row['banner_registration'];
 }
 
+use PHPMailer\PHPMailer\PHPMailer;
 
-
-
-
-
-
-
-
-
-
+include("PHPMailer-master/src/PHPMailer.php");
+include("PHPMailer-master/src/SMTP.php");
+include("PHPMailer-master/src/Exception.php");
 
 ?>
 
@@ -26,72 +21,52 @@ if (isset($_POST['form1'])) {
 
     $valid = 1;
 
-    if(empty($_POST['cust_name'])) {
+    if (empty($_POST['cust_name'])) {
         $valid = 0;
-        $error_message .= LANG_VALUE_123."<br>";
+        $error_message .= LANG_VALUE_123 . "<br>";
     }
 
-    if(empty($_POST['cust_email'])) {
+    if (empty($_POST['cust_email'])) {
         $valid = 0;
-        $error_message .= LANG_VALUE_131."<br>";
+        $error_message .= LANG_VALUE_131 . "<br>";
     } else {
         if (filter_var($_POST['cust_email'], FILTER_VALIDATE_EMAIL) === false) {
             $valid = 0;
-            $error_message .= LANG_VALUE_134."<br>";
+            $error_message .= LANG_VALUE_134 . "<br>";
         } else {
             $statement = $pdo->prepare("SELECT * FROM tbl_customer WHERE cust_email=?");
             $statement->execute(array($_POST['cust_email']));
-            $total = $statement->rowCount();                            
-            if($total) {
+            $total = $statement->rowCount();
+            if ($total) {
                 $valid = 0;
-                $error_message .= LANG_VALUE_147."<br>";
+                $error_message .= LANG_VALUE_147 . "<br>";
             }
         }
     }
 
-    if(empty($_POST['cust_phone'])) {
+    if (empty($_POST['cust_phone'])) {
         $valid = 0;
-        $error_message .= LANG_VALUE_124."<br>";
+        $error_message .= LANG_VALUE_124 . "<br>";
     }
 
-    if(empty($_POST['cust_address'])) {
+    if (empty($_POST['cust_address'])) {
         $valid = 0;
-        $error_message .= LANG_VALUE_125."<br>";
+        $error_message .= LANG_VALUE_125 . "<br>";
     }
 
-    if(empty($_POST['cust_country'])) {
+    if (empty($_POST['cust_password']) || empty($_POST['cust_re_password'])) {
         $valid = 0;
-        $error_message .= LANG_VALUE_126."<br>";
+        $error_message .= LANG_VALUE_138 . "<br>";
     }
 
-    if(empty($_POST['cust_city'])) {
-        $valid = 0;
-        $error_message .= LANG_VALUE_127."<br>";
-    }
-
-    if(empty($_POST['cust_state'])) {
-        $valid = 0;
-        $error_message .= LANG_VALUE_128."<br>";
-    }
-
-    if(empty($_POST['cust_zip'])) {
-        $valid = 0;
-        $error_message .= LANG_VALUE_129."<br>";
-    }
-
-    if( empty($_POST['cust_password']) || empty($_POST['cust_re_password']) ) {
-        $valid = 0;
-        $error_message .= LANG_VALUE_138."<br>";
-    }
-
-    if( !empty($_POST['cust_password']) && !empty($_POST['cust_re_password']) ) {
-        if($_POST['cust_password'] != $_POST['cust_re_password']) {
+    if (!empty($_POST['cust_password']) && !empty($_POST['cust_re_password'])) {
+        if ($_POST['cust_password'] != $_POST['cust_re_password']) {
             $valid = 0;
-            $error_message .= LANG_VALUE_139."<br>";
+            $error_message .= LANG_VALUE_139 . "<br>";
         }
     }
 
-    if($valid == 1) {
+    if ($valid == 1) {
 
         $token = md5(time());
         $cust_datetime = date('Y-m-d h:i:s');
@@ -103,133 +78,88 @@ if (isset($_POST['form1'])) {
                                         cust_email,
                                         cust_phone,
                                         cust_address,
-                                        cust_city,
-                                        cust_state,
-                                        cust_b_name,
-                                        cust_b_cname,
-                                        cust_b_phone,
-                                        cust_b_country,
-                                        cust_b_address,
-                                        cust_b_city,
-                                        cust_b_state,
-                                        cust_b_zip,
-                                        cust_s_name,
-                                        cust_s_cname,
-                                        cust_s_phone,
-                                        cust_s_country,
-                                        cust_s_address,
-                                        cust_s_city,
-                                        cust_s_state,
-                                        cust_s_zip,
                                         cust_password,
                                         cust_token,
                                         cust_datetime,
                                         cust_timestamp,
                                         cust_status
-                                    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+                                    ) VALUES (?,?,?,?,?,?,?,?,?)");
         $statement->execute(array(
-                                        strip_tags($_POST['cust_name']),
-                                        strip_tags($_POST['cust_email']),
-                                        strip_tags($_POST['cust_phone']),
-                                        strip_tags($_POST['cust_address']),
-                                        strip_tags($_POST['cust_city']),
-                                        strip_tags($_POST['cust_state']),
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        '',
-                                        md5($_POST['cust_password']),
-                                        $token,
-                                        $cust_datetime,
-                                        $cust_timestamp,
-                                        0
-                                    ));
-            
-     
-    function sendMail($email,$token) {
-        require "PHPMailer-master/src/PHPMailer.php"; 
-        require "PHPMailer-master/src/SMTP.php"; 
-        require 'PHPMailer-master/src/Exception.php'; 
-        $mail = new PHPMailer\PHPMailer\PHPMailer(true);//true:enables exceptions
-        try {
-            $mail->SMTPDebug = 0; //0,1,2: chế độ debug
-            $mail->isSMTP();  
-            $mail->CharSet  = "utf-8";
-            $mail->Host = 'smtp.gmail.com';  //SMTP servers
-            $mail->SMTPAuth = true; // Enable authentication
-            $mail->Username = 'minhthien27052002@gmail.com'; // SMTP username
-            $mail->Password = 'lsmchoamjhothwyz';   // SMTP password
-            $mail->SMTPSecure = 'ssl';  // encryption TLS/SSL 
-            $mail->Port = 465;  // port to connect to                
-            $mail->setFrom('minhthien27052002@gmail.com', 'ADMIN' ); 
-            $mail->addAddress($email); 
-            $mail->isHTML(true);  // Set email format to HTML
-            $mail->Subject = 'Gửi email để xác nhận tài khoản';
-            $verify_link = 'http://localhost/nongsanquenha.com/verify.php?email='.$email.'&token='.$token;
-            
-                $noidungthu = '
-        '.LANG_VALUE_151.'<br><br>
-        
-        <a href="'.$verify_link.'">Nhấn vào đây để xác nhận</a>';
-            $mail->Body = $noidungthu;
-            $mail->smtpConnect( array(
-                "ssl" => array(
-                    "verify_peer" => false,
-                    "verify_peer_name" => false,
-                    "allow_self_signed" => true
+            strip_tags($_POST['cust_name']),
+            strip_tags($_POST['cust_email']),
+            strip_tags($_POST['cust_phone']),
+            strip_tags($_POST['cust_address']),
+            md5($_POST['cust_password']),
+            $token,
+            $cust_datetime,
+            $cust_timestamp,
+            0
+        ));
+        function SendMail($email, $token)
+        {
+            $mail = new PHPMailer(true);
+            $mail->SMTPOptions = array(
+                'ssl' => array(
+                    'verify_peer' => false,
+                    'verify_peer_name' => false,
+                    'allow_self_signed' => true
                 )
-            ));
+            );
+            //Server settings
+            $mail->SMTPDebug = 0;                      // Enable verbose debug output
+            $mail->isSMTP();                                            // Send using SMTP
+            $mail->Host       = 'smtp.gmail.com';                     // Set the SMTP server to send through
+            $mail->SMTPAuth   = true;                                   // Enable SMTP authentication
+            $mail->Username   = 'minhthien27052002@gmail.com';                     // SMTP username
+            $mail->Password   = 'lsmchoamjhothwyz';                               // SMTP password
+            $mail->SMTPSecure = 'tls';         // Enable TLS encryption; `PHPMailer::ENCRYPTION_SMTPS` also accepted
+            $mail->Port       = 587;                                    // TCP port to connect to
+            $mail->CharSet = 'UTF-8';
+            //Recipients
+            $mail->setFrom('minhthien27052002@gmail.com', 'ADMIN');
+            $mail->addAddress($email);     // Add a recipient
+
+            // Content
+            $mail->isHTML(true);                                  // Set email format to HTML
+            $mail->Subject = '<nongsansach> BẠN CÓ MÃ XÁC NHẬN EMAIL';
+            $mail->Body = '
+            Nhấn vào liên kết dưới đây <br>
+            http://localhost/nss/verify.php?email='.$email.'&token='.$token.'';
             $mail->send();
             return true;
-        } catch (Exception $e) {
-            echo 'Error: ', $mail->ErrorInfo;
-            return false;
         }
-     }
     }
 
-        // Send email for confirmation of the account
-        $to = $_POST['cust_email'];
-        $ketqua = sendMail($to,$token);
-        if($ketqua){
-            echo '<script>
+
+    // Send email for confirmation of the account
+    $to = $_POST['cust_email'];
+    $ketqua = SendMail($to, $token);
+    if ($ketqua) {
+        echo '<script>
             alert("Bạn đã đăng kí tài khoản. Vui lòng kiểm tra Email để xác thực tài khoản ");
             window.location.href = "registration.php";
         </script>';
-
-        } else{
-            echo '<script>
+    } else {
+        echo '<script>
             alert("Bạn đăng kí không thành công!!");
         </script>';
-        }
-//         $subject = LANG_VALUE_150;
-//         $verify_link = 'http://localhost/nongsanquenha.com/verify.php?email='.$to.'&token='.$token;
-//         $message = '
-// '.LANG_VALUE_151.'<br><br>
+    }
+    //         $subject = LANG_VALUE_150;
+    //         $verify_link = 'http://localhost/nongsanquenha.com/verify.php?email='.$to.'&token='.$token;
+    //         $message = '
+    // '.LANG_VALUE_151.'<br><br>
 
-// <a href="'.$verify_link.'">Nhấn vào đây để xác nhận</a>';
+    // <a href="'.$verify_link.'">Nhấn vào đây để xác nhận</a>';
 
-//         $headers = "From: noreply@" . 'http://localhost/nongsanquenha.com' . "\r\n" .
-//                    "Reply-To: noreply@" . 'http://localhost/nongsanquenha.com' . "\r\n" .
-//                    "X-Mailer: PHP/" . phpversion() . "\r\n" . 
-//                    "MIME-Version: 1.0\r\n" . 
-//                    "Content-Type: text/html; charset=ISO-8859-1\r\n";
-        
-        
-        
-        // Sending Email
+    //         $headers = "From: noreply@" . 'http://localhost/nongsanquenha.com' . "\r\n" .
+    //                    "Reply-To: noreply@" . 'http://localhost/nongsanquenha.com' . "\r\n" .
+    //                    "X-Mailer: PHP/" . phpversion() . "\r\n" . 
+    //                    "MIME-Version: 1.0\r\n" . 
+    //                    "Content-Type: text/html; charset=ISO-8859-1\r\n";
+
+
+
+    // Sending Email
     //     mail($to, $subject, $message, $headers);
 
     //     unset($_POST['cust_name']);
@@ -258,20 +188,20 @@ if (isset($_POST['form1'])) {
             <div class="col-md-12">
                 <div class="user-content">
 
-                    
+
 
                     <form action="" method="post">
                         <?php $csrf->echoInputField(); ?>
                         <div class="row">
                             <div class="col-md-2"></div>
                             <div class="col-md-8">
-                                
+
                                 <?php
-                                if($error_message != '') {
-                                    echo "<div class='error' style='padding: 10px;background:#f1f1f1;margin-bottom:20px;'>".$error_message."</div>";
+                                if ($error_message != '') {
+                                    echo "<div class='error' style='padding: 10px;background:#f1f1f1;margin-bottom:20px;'>" . $error_message . "</div>";
                                 }
-                                if($success_message != '') {
-                                    echo "<div class='success' style='padding: 10px;background:#f1f1f1;margin-bottom:20px;'>".$success_message."</div>";
+                                if ($success_message != '') {
+                                    echo "<div class='success' style='padding: 10px;background:#f1f1f1;margin-bottom:20px;'>" . $success_message . "</div>";
                                 }
                                 ?>
                                 <div class="col-md-6 form-group">
@@ -283,49 +213,44 @@ if (isset($_POST['form1'])) {
                                 </div>
                                 <div class="col-md-6 form-group">
                                     <label for=""><?php echo LANG_VALUE_102; ?> *</label>
-                                    <input type="text" class="form-control" name="cust_name" value="<?php if(isset($_POST['cust_name'])){echo $_POST['cust_name'];} ?>">
+                                    <input type="text" class="form-control" name="cust_name" value="<?php if (isset($_POST['cust_name'])) {
+                                                                                                        echo $_POST['cust_name'];
+                                                                                                    } ?>">
                                 </div>
                                 <div class="col-md-6 form-group">
                                     <label for=""><?php echo LANG_VALUE_94; ?> *</label>
-                                    <input type="email" class="form-control" name="cust_email" value="<?php if(isset($_POST['cust_email'])){echo $_POST['cust_email'];} ?>">
+                                    <input type="email" class="form-control" name="cust_email" value="<?php if (isset($_POST['cust_email'])) {
+                                                                                                            echo $_POST['cust_email'];
+                                                                                                        } ?>">
                                 </div>
                                 <div class="col-md-6 form-group">
                                     <label for=""><?php echo LANG_VALUE_104; ?> *</label>
-                                    <input type="text" class="form-control" name="cust_phone" value="<?php if(isset($_POST['cust_phone'])){echo $_POST['cust_phone'];} ?>">
+                                    <input type="text" class="form-control" name="cust_phone" value="<?php if (isset($_POST['cust_phone'])) {
+                                                                                                            echo $_POST['cust_phone'];
+                                                                                                        } ?>">
                                 </div>
                                 <div class="col-md-12 form-group">
                                     <label for=""><?php echo LANG_VALUE_105; ?> *</label>
-                                    <textarea name="cust_address" class="form-control" cols="30" rows="10" style="height:70px;"><?php if(isset($_POST['cust_address'])){echo $_POST['cust_address'];} ?></textarea>
+                                    <textarea name="cust_address" class="form-control" cols="30" rows="10" style="height:70px;"><?php if (isset($_POST['cust_address'])) {
+                                                                                                                                    echo $_POST['cust_address'];
+                                                                                                                                } ?></textarea>
                                 </div>
-                                <div class="col-md-6 form-group">
+                                <!-- <div class="col-md-6 form-group">
                                     <label for=""><?php echo LANG_VALUE_106; ?> *</label>
                                     <select name="cust_country" class="form-control select2">
                                         <option value="">Select country</option>
                                     <?php
                                     $statement = $pdo->prepare("SELECT * FROM tbl_country ORDER BY country_name ASC");
                                     $statement->execute();
-                                    $result = $statement->fetchAll(PDO::FETCH_ASSOC);                            
+                                    $result = $statement->fetchAll(PDO::FETCH_ASSOC);
                                     foreach ($result as $row) {
-                                        ?>
+                                    ?>
                                         <option value="<?php echo $row['country_id']; ?>"><?php echo $row['country_name']; ?></option>
                                         <?php
                                     }
-                                    ?>    
+                                        ?>    
                                     </select>                                    
-                                </div>
-                                
-                                <div class="col-md-6 form-group">
-                                    <label for=""><?php echo LANG_VALUE_107; ?> *</label>
-                                    <input type="text" class="form-control" name="cust_city" value="<?php if(isset($_POST['cust_city'])){echo $_POST['cust_city'];} ?>">
-                                </div>
-                                <div class="col-md-6 form-group">
-                                    <label for=""><?php echo LANG_VALUE_108; ?> *</label>
-                                    <input type="text" class="form-control" name="cust_state" value="<?php if(isset($_POST['cust_state'])){echo $_POST['cust_state'];} ?>">
-                                </div>
-                                <div class="col-md-6 form-group">
-                                    <label for=""><?php echo LANG_VALUE_109; ?> *</label>
-                                    <input type="text" class="form-control" name="cust_zip" value="<?php if(isset($_POST['cust_zip'])){echo $_POST['cust_zip'];} ?>">
-                                </div>
+                                </div> -->
                                 <div class="col-md-6 form-group">
                                     <label for=""><?php echo LANG_VALUE_96; ?> *</label>
                                     <input type="password" class="form-control" name="cust_password">
@@ -339,9 +264,9 @@ if (isset($_POST['form1'])) {
                                     <input type="submit" class="btn btn-danger" value="<?php echo LANG_VALUE_15; ?>" name="form1">
                                 </div>
                             </div>
-                        </div>                        
+                        </div>
                     </form>
-                </div>                
+                </div>
             </div>
         </div>
     </div>
